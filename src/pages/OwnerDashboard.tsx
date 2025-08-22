@@ -162,7 +162,7 @@ const OwnerDashboard: React.FC = () => {
                 { id: 'analytics', label: 'Analytics', icon: BarChart3 },
                 { id: 'menu', label: 'Menu Management', icon: TrendingUp },
                 { id: 'staff', label: 'Staff Management', icon: Users },
-                { id: 'qr', label: 'Table QR', icon: QrCode }
+                { id: 'qr', label: 'Table QR', icon: TrendingUp }
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -191,7 +191,7 @@ const OwnerDashboard: React.FC = () => {
                 {[
                   { label: 'Total Orders', value: analyticsData.totalOrders, icon: BarChart3, color: 'bg-blue-500' },
                   { label: 'Total Revenue', value: `₹${analyticsData.totalRevenue.toFixed(0)}`, icon: DollarSign, color: 'bg-green-500' },
-                  { label: 'Avg Order Value', value: `₹${analyticsData.averageOrderValue.toFixed(0)}`, icon: QrCode, color: 'bg-purple-500' },
+                  { label: 'Avg Order Value', value: `₹${analyticsData.averageOrderValue.toFixed(0)}`, icon: TrendingUp, color: 'bg-purple-500' },
                   { label: 'Active Staff', value: staffMembers.length, icon: Users, color: 'bg-orange-500' }
                 ].map((metric, index) => (
                   <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">

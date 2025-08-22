@@ -4,7 +4,7 @@ import { getMenuItems } from '../data/mockData';
 import QRCode from 'qrcode';
 
 const OwnerDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'menu' | 'staff'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'menu' | 'staff' | 'qr'>('analytics');
   const [menuItems, setMenuItems] = useState(getMenuItems());
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);

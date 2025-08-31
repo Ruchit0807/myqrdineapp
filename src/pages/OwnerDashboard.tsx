@@ -703,6 +703,24 @@ const OwnerDashboard: React.FC = () => {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            const newUrl = prompt('Enter new image URL for ' + item.name + ':', item.image);
+                            if (newUrl) {
+                              const updatedItems = menuItems.map(menuItem => 
+                                menuItem.id === item.id ? { ...menuItem, image: newUrl } : menuItem
+                              );
+                              setMenuItems(updatedItems);
+                              localStorage.setItem('ownerMenuItems', JSON.stringify(updatedItems));
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg transition-colors text-sm font-medium"
+                        >
+                          🖼️ Change Image
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -900,6 +918,34 @@ const OwnerDashboard: React.FC = () => {
                     <option value="Beverages">Beverages</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Image URL
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="url"
+                    value={editingItem.image}
+                    onChange={(e) => setEditingItem({ ...editingItem, image: e.target.value })}
+                    placeholder="https://..."
+                    className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newUrl = prompt('Enter new image URL:', editingItem.image);
+                      if (newUrl) {
+                        setEditingItem({ ...editingItem, image: newUrl });
+                      }
+                    }}
+                    className="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors text-sm"
+                  >
+                    Change
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Update the image URL for this dish</p>
               </div>
 
               <div className="flex items-center space-x-3">

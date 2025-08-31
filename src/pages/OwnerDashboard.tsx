@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, Users, DollarSign, TrendingUp, Edit, Plus, Trash2, Package, AlertTriangle, Store, Send, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getMenuItems } from '../data/mockData';
 import QRCode from 'qrcode';
+import { dishesService, inventoryService, analyticsService, realtimeService } from '../services/database';
+import { type Dish, type InventoryItem } from '../config/supabase';
 
 const OwnerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'analytics' | 'menu' | 'staff' | 'qr' | 'inventory' | 'marketing'>('analytics');
-  const [menuItems, setMenuItems] = useState<Array<any>>(() => {
-    try {
-      const saved = localStorage.getItem('ownerMenuItems');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return getMenuItems();
-  });
+  const [menuItems, setMenuItems] = useState<Dish[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -32,21 +28,8 @@ const OwnerDashboard: React.FC = () => {
   const [qrTable, setQrTable] = useState<string>('1');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-  // Inventory state (mock)
-  const [inventoryItems, setInventoryItems] = useState<Array<{
-    id: string;
-    name: string;
-    unit: string;
-    quantity: number;
-    lowStockThreshold: number;
-    lastUpdated: string;
-    supplierId?: string;
-  }>>([
-    { id: 'inv-1', name: 'Basmati Rice', unit: 'kg', quantity: 2, lowStockThreshold: 5, lastUpdated: '2025-08-20', supplierId: 'sup-1' },
-    { id: 'inv-2', name: 'Chicken Breast', unit: 'kg', quantity: 12, lowStockThreshold: 6, lastUpdated: '2025-08-28', supplierId: 'sup-2' },
-    { id: 'inv-3', name: 'Cooking Oil', unit: 'L', quantity: 1, lowStockThreshold: 3, lastUpdated: '2025-08-25', supplierId: 'sup-1' },
-    { id: 'inv-4', name: 'Tomatoes', unit: 'kg', quantity: 9, lowStockThreshold: 4, lastUpdated: '2025-08-29', supplierId: 'sup-3' }
-  ]);
+  // Inventory state
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [suppliers] = useState<Array<{
     id: string;
     name: string;
@@ -68,6 +51,28 @@ const OwnerDashboard: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string; channel: 'email' | 'whatsapp' | 'both'; offer: string; schedule?: string; status: 'scheduled' | 'sent' | 'draft' }>>([
     { id: 'cmp1', name: 'Weekend Happy Hour', channel: 'both', offer: 'Buy 1 Get 1 on Mocktails 5-7 PM', schedule: '2025-09-05T17:00', status: 'scheduled' }
   ]);
+
+  // Load data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [dishes, inventory] = await Promise.all([
+          dishesService.getAllDishes(),
+          inventoryService.getAllItems()
+        ]);
+        setMenuItems(dishes);
+        setInventoryItems(inventory);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('Failed to load data. Please check your Supabase connection.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Load contacts from localStorage (collected at checkout)
   React.useEffect(() => {
@@ -409,15 +414,22 @@ const OwnerDashboard: React.FC = () => {
                   <span>Low Stock Alerts</span>
                 </h3>
                 <div className="space-y-2">
-                  {inventoryItems.filter(i => i.quantity <= i.lowStockThreshold).map(item => (
+                  {inventoryItems.filter(i => i.quantity <= 5).map(item => (
                     <div key={item.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200/50 dark:border-amber-700/40 shadow-glow">
                       <div className="text-sm text-amber-800 dark:text-amber-200">
-                        Only {item.quantity}{item.unit} {item.name} left (threshold {item.lowStockThreshold}{item.unit})
+                        Only {item.quantity}{item.unit} {item.item_name} left (threshold 5{item.unit})
                       </div>
                       <button
-                        onClick={() => {
-                          // quick reorder stub - add +5 units
-                          setInventoryItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 5, lastUpdated: new Date().toISOString().slice(0,10) } : i));
+                        onClick={async () => {
+                          try {
+                            // quick reorder - add +5 units
+                            await inventoryService.updateQuantity(item.id, item.quantity + 5);
+                            const updatedInventory = await inventoryService.getAllItems();
+                            setInventoryItems(updatedInventory);
+                          } catch (error) {
+                            console.error('Error updating quantity:', error);
+                            alert('Failed to update quantity. Please try again.');
+                          }
                         }}
                         className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-sm"
                       >
@@ -425,7 +437,7 @@ const OwnerDashboard: React.FC = () => {
                       </button>
                     </div>
                   ))}
-                  {inventoryItems.filter(i => i.quantity <= i.lowStockThreshold).length === 0 && (
+                  {inventoryItems.filter(i => i.quantity <= 5).length === 0 && (
                     <div className="text-sm text-gray-600 dark:text-gray-400">All items are above thresholds.</div>
                   )}
                 </div>
@@ -647,7 +659,7 @@ const OwnerDashboard: React.FC = () => {
                   <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
                       <img
-                        src={item.image}
+                        src={item.image_url}
                         alt={item.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -706,14 +718,18 @@ const OwnerDashboard: React.FC = () => {
                       
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => {
-                            const newUrl = prompt('Enter new image URL for ' + item.name + ':', item.image);
+                          onClick={async () => {
+                            const newUrl = prompt('Enter new image URL for ' + item.name + ':', item.image_url);
                             if (newUrl) {
-                              const updatedItems = menuItems.map(menuItem => 
-                                menuItem.id === item.id ? { ...menuItem, image: newUrl } : menuItem
-                              );
-                              setMenuItems(updatedItems);
-                              localStorage.setItem('ownerMenuItems', JSON.stringify(updatedItems));
+                              try {
+                                await dishesService.updateDish(item.id, { image_url: newUrl });
+                                // Refresh menu items
+                                const updatedDishes = await dishesService.getAllDishes();
+                                setMenuItems(updatedDishes);
+                              } catch (error) {
+                                console.error('Error updating image:', error);
+                                alert('Failed to update image. Please try again.');
+                              }
                             }
                           }}
                           className="flex-1 px-3 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg transition-colors text-sm font-medium"

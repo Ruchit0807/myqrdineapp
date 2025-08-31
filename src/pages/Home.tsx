@@ -68,10 +68,8 @@ const Home: React.FC = () => {
   };
 
   const scrollToMenu = () => {
-    const menuSection = document.getElementById('menu');
-    if (menuSection) {
-      menuSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Navigate to the menu route
+    window.location.href = '/menu';
   };
 
   // AI Chat Functions

@@ -36,21 +36,8 @@ const Home: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Send email using EmailJS or similar service
-      // For now, we'll simulate sending to rsdesign0807@gmail.com
-      const emailData = {
-        to: 'rsdesign0807@gmail.com',
-        subject: 'New QR Menu Request',
-        body: `
-          Name: ${formData.name}
-          Email: ${formData.email}
-          Phone: ${formData.phone}
-          Restaurant: ${formData.restaurant}
-          Message: ${formData.message}
-        `
-      };
-      
-      // Simulate API call
+      // Simulate sending email to rsdesign0807@gmail.com
+      // In production, you would integrate with EmailJS or similar service
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       alert('Thank you! Your request has been sent to rsdesign0807@gmail.com');

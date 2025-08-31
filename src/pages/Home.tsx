@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { QrCode, BarChart3, ShoppingCart, Users, ArrowRight, Check, Star, Play, Shield, Globe, Palette, Zap, TrendingUp, Heart, X } from 'lucide-react';
+import { QrCode, BarChart3, ShoppingCart, Users, ArrowRight, Check, Star, Play, Shield, Globe, Palette, Zap, TrendingUp, Heart, X, Utensils, ChefHat, Coffee, Pizza, Wine, Cake, Sandwich } from 'lucide-react';
 
 const Home: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -53,6 +53,13 @@ const Home: React.FC = () => {
       alert('Error sending request. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const scrollToMenu = () => {
+    const menuSection = document.getElementById('menu');
+    if (menuSection) {
+      menuSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -114,11 +121,6 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Logo Header */}
-      <div className="fixed top-4 left-4 z-50">
-        <img src="/logo.svg" alt="QR Dine Logo" className="w-12 h-12" />
-      </div>
-
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
@@ -126,22 +128,48 @@ const Home: React.FC = () => {
           <div className="absolute inset-0 opacity-30 bg-gradient-to-r from-white/5 to-transparent"></div>
         </div>
         
-        {/* Enhanced Floating Elements */}
+        {/* Enhanced Floating Elements with Restaurant Theme */}
         <div className="absolute top-20 left-20 animate-float">
-          <div className="w-20 h-20 bg-white/10 rounded-full backdrop-blur-sm border border-white/20"></div>
+          <div className="w-20 h-20 bg-white/10 rounded-full backdrop-blur-sm border border-white/20 flex items-center justify-center">
+            <Utensils className="w-10 h-10 text-white/60 animate-pulse" />
+          </div>
         </div>
         <div className="absolute bottom-20 right-20 animate-float-delay-1">
-          <div className="w-16 h-16 bg-accent-500/20 rounded-full backdrop-blur-sm border border-accent-300/30"></div>
+          <div className="w-16 h-16 bg-accent-500/20 rounded-full backdrop-blur-sm border border-accent-300/30 flex items-center justify-center">
+            <ChefHat className="w-8 h-8 text-accent-300/60 animate-bounce-gentle" />
+          </div>
         </div>
         <div className="absolute top-1/2 left-10 animate-float-delay-2">
-          <div className="w-12 h-12 bg-primary-300/20 rounded-full backdrop-blur-sm border border-primary-300/30"></div>
+          <div className="w-12 h-12 bg-primary-300/20 rounded-full backdrop-blur-sm border border-primary-300/30 flex items-center justify-center">
+            <Coffee className="w-6 h-6 text-primary-300/60 animate-pulse-slow" />
+          </div>
         </div>
         <div className="absolute top-1/3 right-16 animate-float">
-          <div className="w-8 h-8 bg-white/15 rounded-full backdrop-blur-sm border border-white/25"></div>
+          <div className="w-8 h-8 bg-white/15 rounded-full backdrop-blur-sm border border-white/25 flex items-center justify-center">
+            <Pizza className="w-4 h-4 text-white/60 animate-rotate-slow" />
+          </div>
+        </div>
+        <div className="absolute bottom-1/3 left-1/4 animate-float-delay-1">
+          <div className="w-10 h-10 bg-accent-400/20 rounded-full backdrop-blur-sm border border-accent-400/30 flex items-center justify-center">
+            <Sandwich className="w-5 h-5 text-accent-400/60 animate-bounce" />
+          </div>
+        </div>
+        <div className="absolute top-1/4 right-1/3 animate-float-delay-2">
+          <div className="w-14 h-14 bg-white/20 rounded-full backdrop-blur-sm border border-white/30 flex items-center justify-center">
+            <Wine className="w-7 h-7 text-white/70 animate-pulse" />
+          </div>
+        </div>
+        <div className="absolute bottom-1/4 right-1/4 animate-float">
+          <div className="w-6 h-6 bg-primary-400/20 rounded-full backdrop-blur-sm border border-primary-400/30 flex items-center justify-center">
+            <Cake className="w-3 h-3 text-primary-400/60 animate-bounce-gentle" />
+          </div>
         </div>
         
         <div className="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
           <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            {/* Added spacing before Revolutionize Dining */}
+            <div className="h-20"></div>
+            
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               <span className="block animate-slide-in-left">Revolutionize</span>
               <span className="block text-accent-300 animate-slide-in-right" style={{ animationDelay: '0.2s' }}>Dining</span>
@@ -159,17 +187,17 @@ const Home: React.FC = () => {
                 Get Your Digital QR Menu Now
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <a 
-                href="#menu" 
+              <button 
+                onClick={scrollToMenu}
                 className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all duration-300 flex items-center gap-2 hover-lift"
               >
                 <Play className="w-5 h-5" />
                 Free Trial
-              </a>
+              </button>
             </div>
             
-            {/* Enhanced QR Demo */}
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 max-w-md mx-auto animate-scale-in" style={{ animationDelay: '0.8s' }}>
+            {/* Enhanced QR Demo with click functionality */}
+            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 max-w-md mx-auto animate-scale-in cursor-pointer hover:scale-105 transition-transform duration-300" style={{ animationDelay: '0.8s' }} onClick={scrollToMenu}>
               <div className="text-6xl mb-4 animate-bounce-gentle">📱</div>
               <p className="text-lg font-medium mb-4">Scan this to view</p>
               <div className="bg-white rounded-2xl p-4 inline-block hover-lift">
@@ -178,6 +206,7 @@ const Home: React.FC = () => {
                 </div>
               </div>
               <p className="text-sm text-white/70 mt-3">Digital QR Menu Demo</p>
+              <p className="text-xs text-white/50 mt-2">Click to explore menu section</p>
             </div>
           </div>
         </div>
@@ -475,16 +504,16 @@ const Home: React.FC = () => {
               Send us message, We love to hear from you.
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <input type="text" placeholder="Name" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all" />
-              <input type="email" placeholder="Email" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all" />
+              <input type="text" placeholder="Name" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black" />
+              <input type="email" placeholder="Email" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <input type="tel" placeholder="Number" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all" />
-              <input type="text" placeholder="City" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all" />
+              <input type="tel" placeholder="Number" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black" />
+              <input type="text" placeholder="City" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <input type="text" placeholder="State" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all" />
-              <textarea placeholder="Message" rows={3} className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all resize-none"></textarea>
+              <input type="text" placeholder="State" className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black" />
+              <textarea placeholder="Message" rows={3} className="px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all resize-none text-black"></textarea>
             </div>
             <button className="w-full bg-primary-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary-600 transition-colors duration-300 hover-lift">
               Send Message
@@ -516,7 +545,7 @@ const Home: React.FC = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black"
                   placeholder="Your full name"
                 />
               </div>
@@ -524,12 +553,12 @@ const Home: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input
-                  type="email"
+                  type="text"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black"
                   placeholder="your@email.com"
                 />
               </div>
@@ -542,7 +571,7 @@ const Home: React.FC = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black"
                   placeholder="Your phone number"
                 />
               </div>
@@ -554,7 +583,7 @@ const Home: React.FC = () => {
                   name="restaurant"
                   value={formData.restaurant}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-black"
                   placeholder="Restaurant or business name"
                 />
               </div>
@@ -564,9 +593,8 @@ const Home: React.FC = () => {
                 <textarea
                   name="message"
                   value={formData.message}
-                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all resize-none text-black"
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all resize-none"
                   placeholder="Tell us about your requirements..."
                 />
               </div>

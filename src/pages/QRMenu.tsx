@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Star, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
-import { getRestaurant, getCategories } from '../data/mockData';
+import { getRestaurant, getCategories, getMenuItems } from '../data/mockData';
 import toast from 'react-hot-toast';
 import { useTableStore } from '../stores/tableStore';
 
@@ -12,9 +12,33 @@ const QRMenu: React.FC = () => {
   const { tableNumber, setTableNumber } = useTableStore();
   
   const restaurant = getRestaurant();
-  const categories = getCategories();
+  const baseCategories = getCategories();
+  const effectiveItems = React.useMemo(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ownerMenuItems') || '[]');
+      const base = getMenuItems();
+      // If owner has saved items, use ONLY those; enrich tags from base where names match
+      if (Array.isArray(saved) && saved.length > 0) {
+        return saved.map((it: any) => {
+          const match = base.find((b: any) => (b.name || '').toLowerCase() === (it.name || '').toLowerCase());
+          const mergedTags = Array.from(new Set([...(it.tags || []), ...((match?.tags) || [])]));
+          return { ...it, tags: mergedTags };
+        });
+      }
+      // Fallback: base items
+      return base;
+    } catch {
+      return getMenuItems();
+    }
+  }, []);
+  const categories = React.useMemo(() => {
+    return baseCategories.map(cat => ({
+      ...cat,
+      items: effectiveItems.filter((it: any) => it.category === cat.name),
+    }));
+  }, [baseCategories, effectiveItems]);
 
-  const allItems = categories.flatMap(cat => cat.items);
+  const allItems = React.useMemo(() => categories.flatMap(cat => cat.items), [categories]);
 
   // Auto-read table from URL if present
   React.useEffect(() => {

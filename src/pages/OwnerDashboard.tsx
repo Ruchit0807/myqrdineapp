@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { BarChart3, Users, DollarSign, TrendingUp, Edit, Plus, Trash2 } from 'lucide-react';
+import { BarChart3, Users, DollarSign, TrendingUp, Edit, Plus, Trash2, Package, AlertTriangle, Store, Send, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getMenuItems } from '../data/mockData';
 import QRCode from 'qrcode';
 
 const OwnerDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'menu' | 'staff' | 'qr'>('analytics');
-  const [menuItems, setMenuItems] = useState(getMenuItems());
+  const [activeTab, setActiveTab] = useState<'analytics' | 'menu' | 'staff' | 'qr' | 'inventory' | 'marketing'>('analytics');
+  const [menuItems, setMenuItems] = useState<Array<any>>(() => {
+    try {
+      const saved = localStorage.getItem('ownerMenuItems');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return getMenuItems();
+  });
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -24,6 +31,65 @@ const OwnerDashboard: React.FC = () => {
   });
   const [qrTable, setQrTable] = useState<string>('1');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  // Inventory state (mock)
+  const [inventoryItems, setInventoryItems] = useState<Array<{
+    id: string;
+    name: string;
+    unit: string;
+    quantity: number;
+    lowStockThreshold: number;
+    lastUpdated: string;
+    supplierId?: string;
+  }>>([
+    { id: 'inv-1', name: 'Basmati Rice', unit: 'kg', quantity: 2, lowStockThreshold: 5, lastUpdated: '2025-08-20', supplierId: 'sup-1' },
+    { id: 'inv-2', name: 'Chicken Breast', unit: 'kg', quantity: 12, lowStockThreshold: 6, lastUpdated: '2025-08-28', supplierId: 'sup-2' },
+    { id: 'inv-3', name: 'Cooking Oil', unit: 'L', quantity: 1, lowStockThreshold: 3, lastUpdated: '2025-08-25', supplierId: 'sup-1' },
+    { id: 'inv-4', name: 'Tomatoes', unit: 'kg', quantity: 9, lowStockThreshold: 4, lastUpdated: '2025-08-29', supplierId: 'sup-3' }
+  ]);
+  const [suppliers] = useState<Array<{
+    id: string;
+    name: string;
+    contact: string;
+    phone: string;
+    email: string;
+  }>>([
+    { id: 'sup-1', name: 'AgroFresh Traders', contact: 'Rajiv', phone: '+91 90000 11111', email: 'rajiv@agrofresh.com' },
+    { id: 'sup-2', name: 'Prime Meats Co.', contact: 'Meera', phone: '+91 90000 22222', email: 'meera@primemeats.co' },
+    { id: 'sup-3', name: 'VeggieKart', contact: 'Salim', phone: '+91 90000 33333', email: 'salim@veggiekart.in' }
+  ]);
+
+  // Marketing state (mock)
+  const [contacts, setContacts] = useState<Array<{ id: string; name: string; email?: string; whatsapp?: string; optedIn: boolean }>>([
+    { id: 'c1', name: 'Ananya', email: 'ananya@example.com', optedIn: true },
+    { id: 'c2', name: 'Rohit', whatsapp: '+91 98765 43210', optedIn: true },
+    { id: 'c3', name: 'Mira', email: 'mira@example.com', whatsapp: '+91 91234 56789', optedIn: false }
+  ]);
+  const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string; channel: 'email' | 'whatsapp' | 'both'; offer: string; schedule?: string; status: 'scheduled' | 'sent' | 'draft' }>>([
+    { id: 'cmp1', name: 'Weekend Happy Hour', channel: 'both', offer: 'Buy 1 Get 1 on Mocktails 5-7 PM', schedule: '2025-09-05T17:00', status: 'scheduled' }
+  ]);
+
+  // Load contacts from localStorage (collected at checkout)
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('marketingContacts');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setContacts(prev => {
+            // merge unique by email/whatsapp
+            const existingKeys = new Set(prev.map(p => (p.email || '') + '|' + (p.whatsapp || '')));
+            const merged = [...prev];
+            parsed.forEach((p: any) => {
+              const key = (p.email || '') + '|' + (p.whatsapp || '');
+              if (!existingKeys.has(key)) merged.push({ id: p.id || Math.random().toString(36).slice(2), name: p.name || 'Guest', email: p.email, whatsapp: p.whatsapp, optedIn: !!p.optedIn });
+            });
+            return merged;
+          });
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   // const restaurant = getRestaurant();
 
@@ -98,6 +164,13 @@ const OwnerDashboard: React.FC = () => {
     }
   ];
 
+  // Persist menu items to localStorage
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('ownerMenuItems', JSON.stringify(menuItems));
+    } catch {}
+  }, [menuItems]);
+
   const handleEditItem = (item: any) => {
     setEditingItem({ ...item });
     setShowEditModal(true);
@@ -105,7 +178,7 @@ const OwnerDashboard: React.FC = () => {
 
   const handleSaveItem = () => {
     if (editingItem) {
-      setMenuItems(prev => prev.map(item => 
+      setMenuItems((prev: Array<any>) => prev.map((item: any) => 
         item.id === editingItem.id ? editingItem : item
       ));
       setShowEditModal(false);
@@ -115,20 +188,20 @@ const OwnerDashboard: React.FC = () => {
 
   const handleDeleteItem = (itemId: string) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      setMenuItems(prev => prev.filter(item => item.id !== itemId));
+      setMenuItems((prev: Array<any>) => prev.filter((item: any) => item.id !== itemId));
     }
   };
 
   const toggleItemAvailability = (itemId: string) => {
-    setMenuItems(prev => prev.map(item => 
+    setMenuItems((prev: Array<any>) => prev.map((item: any) => 
       item.id === itemId ? { ...item, available: !item.available } : item
     ));
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-secondary-800">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-white dark:bg-secondary-800/90 backdrop-blur shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -156,12 +229,14 @@ const OwnerDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-2 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-secondary-800 rounded-xl p-2 shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex space-x-2">
               {[
                 { id: 'analytics', label: 'Analytics', icon: BarChart3 },
                 { id: 'menu', label: 'Menu Management', icon: TrendingUp },
                 { id: 'staff', label: 'Staff Management', icon: Users },
+                { id: 'inventory', label: 'Inventory', icon: Package },
+                { id: 'marketing', label: 'Marketing', icon: Send },
                 { id: 'qr', label: 'Table QR', icon: TrendingUp }
               ].map(({ id, label, icon: Icon }) => (
                 <button
@@ -185,7 +260,7 @@ const OwnerDashboard: React.FC = () => {
         <div className="min-h-[600px]">
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
-            <div className="space-y-8">
+            <motion.div className="space-y-8" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
               {/* Key Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
@@ -194,7 +269,7 @@ const OwnerDashboard: React.FC = () => {
                   { label: 'Avg Order Value', value: `₹${analyticsData.averageOrderValue.toFixed(0)}`, icon: TrendingUp, color: 'bg-purple-500' },
                   { label: 'Active Staff', value: staffMembers.length, icon: Users, color: 'bg-orange-500' }
                 ].map((metric, index) => (
-                  <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                  <motion.div key={index} className="bg-white dark:bg-secondary-800 rounded-2xl p-6 shadow-premium border border-gray-200 dark:border-gray-700" whileHover={{ scale: 1.02 }}>
                     <div className="flex items-center">
                       <div className={`w-12 h-12 ${metric.color} rounded-lg flex items-center justify-center mr-4`}>
                         <metric.icon className="w-6 h-6 text-white" />
@@ -204,14 +279,14 @@ const OwnerDashboard: React.FC = () => {
                         <div className="text-sm text-gray-600 dark:text-gray-400">{metric.label}</div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
 
               {/* Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Peak Hours */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-secondary-800 rounded-2xl p-6 shadow-premium border border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Peak Hours</h3>
                   <div className="space-y-3">
                     {analyticsData.peakHours.map((hour, index) => (
@@ -232,7 +307,7 @@ const OwnerDashboard: React.FC = () => {
                 </div>
 
                 {/* Top Dishes */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-secondary-800 rounded-2xl p-6 shadow-premium border border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performing Dishes</h3>
                   <div className="space-y-3">
                     {analyticsData.topDishes.map((dish, index) => (
@@ -253,7 +328,7 @@ const OwnerDashboard: React.FC = () => {
               </div>
 
               {/* Weekly Revenue Chart */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-secondary-800 rounded-2xl p-6 shadow-premium border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Weekly Revenue Trend</h3>
                 <div className="flex items-end space-x-2 h-32">
                   {analyticsData.dailyStats.map((day, index) => {
@@ -274,8 +349,286 @@ const OwnerDashboard: React.FC = () => {
                     );
                   })}
                 </div>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      const header = ['Day','Orders','Revenue'];
+                      const rows = analyticsData.dailyStats.map(d => [d.day, d.orders, d.revenue]);
+                      const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'weekly-revenue.csv';
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-sm"
+                  >
+                    Export CSV
+                  </button>
+                </div>
               </div>
-            </div>
+            </motion.div>
+          )}
+
+          {/* Inventory Tab */}
+          {activeTab === 'inventory' && (
+            <motion.div className="space-y-6" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                  <Package className="w-6 h-6" />
+                  <span>Inventory Management</span>
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      // Export to CSV stub
+                      const header = ['Item','Qty','Unit','LowThreshold','LastUpdated'];
+                      const rows = inventoryItems.map(i => [i.name, i.quantity, i.unit, i.lowStockThreshold, i.lastUpdated]);
+                      const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'inventory.csv';
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium"
+                  >
+                    Export CSV
+                  </button>
+                </div>
+              </div>
+
+              {/* Low stock alerts */}
+              <div className="bg-white dark:bg-secondary-800 rounded-2xl p-4 shadow-premium border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  <span>Low Stock Alerts</span>
+                </h3>
+                <div className="space-y-2">
+                  {inventoryItems.filter(i => i.quantity <= i.lowStockThreshold).map(item => (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200/50 dark:border-amber-700/40 shadow-glow">
+                      <div className="text-sm text-amber-800 dark:text-amber-200">
+                        Only {item.quantity}{item.unit} {item.name} left (threshold {item.lowStockThreshold}{item.unit})
+                      </div>
+                      <button
+                        onClick={() => {
+                          // quick reorder stub - add +5 units
+                          setInventoryItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 5, lastUpdated: new Date().toISOString().slice(0,10) } : i));
+                        }}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-sm"
+                      >
+                        Quick Reorder +5
+                      </button>
+                    </div>
+                  ))}
+                  {inventoryItems.filter(i => i.quantity <= i.lowStockThreshold).length === 0 && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">All items are above thresholds.</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Stock table */}
+              <div className="bg-white dark:bg-secondary-800 rounded-2xl shadow-premium border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Item</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Qty</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Unit</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Supplier</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Updated</th>
+                        <th className="px-6 py-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {inventoryItems.map(item => (
+                        <tr key={item.id} className={item.quantity <= item.lowStockThreshold ? 'bg-amber-50/60 dark:bg-amber-900/10' : ''}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
+                              <button onClick={() => setInventoryItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: Math.max(0, i.quantity - 1), lastUpdated: new Date().toISOString().slice(0,10) } : i))} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">-</button>
+                              <span className="text-sm text-gray-900 dark:text-white w-10 text-center">{item.quantity}</span>
+                              <button onClick={() => setInventoryItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1, lastUpdated: new Date().toISOString().slice(0,10) } : i))} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">+</button>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{item.unit}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                            {suppliers.find(s => s.id === item.supplierId)?.name || '—'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{item.lastUpdated}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <button onClick={() => setInventoryItems(prev => prev.filter(i => i.id !== item.id))} className="px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded">Remove</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Suppliers */}
+              <div className="bg-white dark:bg-secondary-800 rounded-2xl p-4 shadow-premium border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2">
+                  <Store className="w-5 h-5" />
+                  <span>Suppliers</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {suppliers.map(s => (
+                    <div key={s.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary-800">
+                      <div className="font-medium text-gray-900 dark:text-white">{s.name}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Contact: {s.contact}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{s.phone}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{s.email}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Marketing Tab */}
+          {activeTab === 'marketing' && (
+            <motion.div className="space-y-6" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                  <Send className="w-6 h-6" />
+                  <span>Promotional Marketing</span>
+                </h2>
+                <button
+                  onClick={() => {
+                    // Export contacts to CSV stub
+                    const header = ['Name','Email','WhatsApp','OptedIn'];
+                    const rows = contacts.map(c => [c.name, c.email || '', c.whatsapp || '', c.optedIn ? 'yes' : 'no']);
+                    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'contacts.csv';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium"
+                >
+                  Export Contacts
+                </button>
+              </div>
+
+              {/* Contacts */}
+              <div className="bg-white dark:bg-secondary-800 rounded-2xl p-4 shadow-premium border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Customer Contacts</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">WhatsApp</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Opted In</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {contacts.map(c => (
+                        <tr key={c.id}>
+                          <td className="px-6 py-3 text-sm text-gray-900 dark:text-white">{c.name}</td>
+                          <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-300">{c.email || '—'}</td>
+                          <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-300">{c.whatsapp || '—'}</td>
+                          <td className="px-6 py-3 text-sm">
+                            <label className="inline-flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={c.optedIn}
+                                onChange={(e) => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, optedIn: e.target.checked } : x))}
+                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                              />
+                              <span className="text-gray-700 dark:text-gray-300">Opt-in</span>
+                            </label>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Campaigns */}
+              <div className="bg-white dark:bg-secondary-800 rounded-2xl p-4 shadow-premium border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Campaigns</h3>
+                  <button
+                    onClick={() => setCampaigns(prev => [{ id: Math.random().toString(36).slice(2), name: 'New Offer', channel: 'both', offer: '10% off your next meal', status: 'draft' }, ...prev])}
+                    className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm"
+                  >
+                    <Plus className="w-4 h-4 inline mr-1" /> New Campaign
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {campaigns.map(c => (
+                    <div key={c.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary-800">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="font-medium text-gray-900 dark:text-white">{c.name}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{c.offer}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Channel: {c.channel}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="datetime-local"
+                            value={c.schedule || ''}
+                            onChange={(e) => setCampaigns(prev => prev.map(x => x.id === c.id ? { ...x, schedule: e.target.value } : x))}
+                            className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                          <select
+                            value={c.channel}
+                            onChange={(e) => setCampaigns(prev => prev.map(x => x.id === c.id ? { ...x, channel: e.target.value as any } : x))}
+                            className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          >
+                            <option value="email">Email</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="both">Both</option>
+                          </select>
+                          <button
+                            onClick={() => setCampaigns(prev => prev.map(x => x.id === c.id ? { ...x, status: 'scheduled' } : x))}
+                            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
+                          >
+                            <Calendar className="w-4 h-4 inline mr-1" /> Schedule
+                          </button>
+                          <button
+                            onClick={() => alert('This would send via Email/WhatsApp API in production.')}
+                            className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded shadow-glow"
+                          >
+                            <Send className="w-4 h-4 inline mr-1" /> Send Now
+                          </button>
+                        </div>
+                      </div>
+                      {/* Previews */}
+                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary-800">
+                          <div className="font-medium mb-1">Email preview</div>
+                          <div className="rounded-lg p-3 bg-gray-50 dark:bg-gray-700">
+                            <div className="font-semibold">{c.name}</div>
+                            <div className="text-gray-600 dark:text-gray-300">{c.offer}</div>
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary-800">
+                          <div className="font-medium mb-1">WhatsApp preview</div>
+                          <div className="rounded-lg p-3 bg-[#075E54] text-white">
+                            <div className="font-semibold">{c.name}</div>
+                            <div className="opacity-90">{c.offer}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           )}
 
           {/* Menu Management Tab */}

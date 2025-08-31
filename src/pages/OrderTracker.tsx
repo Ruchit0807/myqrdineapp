@@ -1,41 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Clock, CheckCircle, Utensils, Truck, Gamepad2, Menu } from 'lucide-react';
+import { useOrderStore } from '../stores/orderStore';
 
 const OrderTracker: React.FC = () => {
-  const [orderStatus, setOrderStatus] = useState<'ordered' | 'approved' | 'cooking' | 'ready' | 'served'>('ordered');
-  const [estimatedTime] = useState(25);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Simulate order progress
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isPaused) {
-        setElapsedTime(prev => prev + 1);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isPaused]);
-
-  // Simulate status updates
-  useEffect(() => {
-    const statusUpdates = [
-      { status: 'approved', time: 5 },
-      { status: 'cooking', time: 15 },
-      { status: 'ready', time: 25 },
-      { status: 'served', time: 30 }
-    ];
-
-    statusUpdates.forEach(({ status, time }) => {
-      setTimeout(() => {
-        if (elapsedTime >= time) {
-          setOrderStatus(status as any);
-        }
-      }, time * 1000);
-    });
-  }, [elapsedTime]);
+  const params = useParams();
+  const order = useOrderStore((state) => state.orders.find(o => o.id === (params.orderId || '')));
+  const orderStatus = (order?.status as 'pending' | 'approved' | 'cooking' | 'ready' | 'served') || 'pending';
+  const estimatedTime = order?.estimatedTime ?? 25;
+  const elapsedTime = 0;
 
   const statusSteps = [
     {
@@ -98,20 +71,28 @@ const OrderTracker: React.FC = () => {
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
           📍 Live Order Tracker
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400">
-          Track your order in real-time
-        </p>
+        {!order && (
+          <p className="text-xl text-gray-600 dark:text-gray-400">No order found. Please place an order from the menu.</p>
+        )}
+        {order && orderStatus === 'pending' && (
+          <p className="text-xl text-gray-600 dark:text-gray-400">Your order is placed. Waiting for chef confirmation…</p>
+        )}
+        {order && orderStatus !== 'pending' && (
+          <p className="text-xl text-gray-600 dark:text-gray-400">Track your order in real-time</p>
+        )}
       </div>
 
       {/* Order Status Card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Order #ORD-{Date.now().toString().slice(-6)}
+            {order ? `Order #${order.id}` : 'No Active Order'}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Placed at {new Date().toLocaleTimeString()}
-          </p>
+          {order && (
+            <p className="text-gray-600 dark:text-gray-400">
+              Placed at {new Date(order.createdAt).toLocaleTimeString()}
+            </p>
+          )}
         </div>
 
         {/* Progress Bar */}
@@ -210,7 +191,7 @@ const OrderTracker: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Estimated Time:</span>
               <span className="font-medium text-gray-900 dark:text-white">
-                {formatTime(estimatedTime)}
+                {formatTime(estimatedTime * 60)}
               </span>
             </div>
             
@@ -224,13 +205,12 @@ const OrderTracker: React.FC = () => {
             </div>
           </div>
 
-          {/* Pause/Resume Button */}
-          <button
-            onClick={() => setIsPaused(!isPaused)}
-            className="mt-4 w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium"
-          >
-            {isPaused ? 'Resume Timer' : 'Pause Timer'}
-          </button>
+          {/* Waiting message for pending orders */}
+          {orderStatus === 'pending' && (
+            <div className="mt-4 w-full px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg">
+              Waiting for chef confirmation…
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -272,20 +252,28 @@ const OrderTracker: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Items Ordered:</h4>
-            <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-              <li>• 2x Butter Chicken</li>
-              <li>• 1x Naan</li>
-              <li>• 1x Mango Lassi</li>
-            </ul>
+            {!order && <div className="text-sm text-gray-500">No items</div>}
+            {order && (
+              <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                {order.items.map((it, idx) => (
+                  <li key={idx}>• {it.quantity}x {it.name}</li>
+                ))}
+              </ul>
+            )}
           </div>
           
           <div>
             <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Order Summary:</h4>
-            <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-              <li>• Total: $45.97</li>
-              <li>• Payment: Online</li>
-              <li>• Table: 12</li>
-            </ul>
+            {!order && <div className="text-sm text-gray-500">No summary</div>}
+            {order && (
+              <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                <li>• Total: ₹{order.total.toFixed(0)}</li>
+                <li>• Payment: {order.paymentMethod === 'online' ? 'Online' : 'Cash'}</li>
+                <li>• Table: {order.tableNumber || '-'}</li>
+                <li>• Status: {order.status}</li>
+                {order.estimatedTime && <li>• ETA: {order.estimatedTime} min</li>}
+              </ul>
+            )}
           </div>
         </div>
       </div>

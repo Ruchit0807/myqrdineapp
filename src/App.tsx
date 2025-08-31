@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 // Customer-facing pages
 import Layout from './components/Layout';
 import QRMenu from './pages/QRMenu';
+import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Payment from './pages/Payment';
 import OrderTracker from './pages/OrderTracker';
@@ -33,10 +34,12 @@ function App() {
           <Routes>
             {/* Customer Routes */}
             <Route path="/" element={<Layout />}>
-              <Route index element={<QRMenu />} />
+              <Route index element={<Home />} />
+              <Route path="menu" element={<QRMenu />} />
               <Route path="cart" element={<Cart />} />
               <Route path="payment" element={<Payment />} />
               <Route path="tracker" element={<OrderTracker />} />
+              <Route path="track-order/:orderId" element={<OrderTracker />} />
               <Route path="games" element={<Games />} />
             </Route>
             

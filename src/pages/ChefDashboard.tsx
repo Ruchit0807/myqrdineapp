@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Play, Users, AlertCircle } from 'lucide-react';
+import { useOrderStore, type Order as StoreOrder } from '../stores/orderStore';
 
 interface Order {
   id: string;
@@ -19,64 +20,34 @@ interface Order {
 }
 
 const ChefDashboard: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: '1',
-      customerName: 'John Doe',
-      items: [
-        { name: 'Butter Chicken', quantity: 2, notes: 'Extra spicy', etaMinutes: 18 },
-        { name: 'Naan', quantity: 3, etaMinutes: 6 },
-        { name: 'Mango Lassi', quantity: 2, etaMinutes: 3 }
-      ],
-      total: 45.97,
-      status: 'pending',
-      createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
-      estimatedTime: 25,
-      customerNotes: 'Please make it extra spicy',
-      tableNumber: '12'
-    },
-    {
-      id: '2',
-      customerName: 'Jane Smith',
-      items: [
-        { name: 'Paneer Tikka', quantity: 1, etaMinutes: 15 },
-        { name: 'Dal Makhani', quantity: 1, etaMinutes: 20 },
-        { name: 'Roti', quantity: 2, etaMinutes: 5 }
-      ],
-      total: 28.96,
-      status: 'approved',
-      createdAt: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
-      estimatedTime: 20,
-      tableNumber: '8'
-    },
-    {
-      id: '3',
-      customerName: 'Mike Johnson',
-      items: [
-        { name: 'Biryani', quantity: 1, etaMinutes: 25 },
-        { name: 'Gulab Jamun', quantity: 2, etaMinutes: 5 }
-      ],
-      total: 30.98,
-      status: 'cooking',
-      createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-      estimatedTime: 30,
-      tableNumber: '15'
-    }
-  ]);
+  const { orders: storedOrders, updateStatus, updateEstimatedTime } = useOrderStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const mapped: Order[] = storedOrders.map((o: StoreOrder) => ({
+      id: o.id,
+      customerName: o.customerName || 'Guest',
+      items: o.items.map(i => ({ name: i.name, quantity: i.quantity })),
+      total: o.total,
+      status: o.status,
+      createdAt: new Date(o.createdAt),
+      estimatedTime: o.estimatedTime ?? 20,
+      tableNumber: o.tableNumber || undefined,
+    }));
+    setOrders(mapped);
+  }, [storedOrders]);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   const updateOrderStatus = (orderId: string, newStatus: Order['status']) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+    setOrders(prev => prev.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+    updateStatus(orderId, newStatus);
   };
 
-  const updateEstimatedTime = (orderId: string, newTime: number) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, estimatedTime: newTime } : order
-    ));
+  const updateEstimatedTimeLocal = (orderId: string, newTime: number) => {
+    setOrders(prev => prev.map(order => order.id === orderId ? { ...order, estimatedTime: newTime } : order));
+    updateEstimatedTime(orderId, newTime);
   };
   const updateItemEta = (orderId: string, itemIndex: number, newTime: number) => {
     setOrders(prev => prev.map(order => {
@@ -194,7 +165,7 @@ const ChefDashboard: React.FC = () => {
                 key={order.id}
                 order={order}
                 onStatusUpdate={updateOrderStatus}
-                onTimeUpdate={updateEstimatedTime}
+                onTimeUpdate={updateEstimatedTimeLocal}
                 getTimeAgo={getTimeAgo}
                 getStatusColor={getStatusColor}
                 getStatusIcon={getStatusIcon}
@@ -225,7 +196,7 @@ const ChefDashboard: React.FC = () => {
                 key={order.id}
                 order={order}
                 onStatusUpdate={updateOrderStatus}
-                onTimeUpdate={updateEstimatedTime}
+                onTimeUpdate={updateEstimatedTimeLocal}
                 getTimeAgo={getTimeAgo}
                 getStatusColor={getStatusColor}
                 getStatusIcon={getStatusIcon}

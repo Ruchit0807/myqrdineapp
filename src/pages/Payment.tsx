@@ -2,22 +2,29 @@ import React, { useState } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { CreditCard, DollarSign, CheckCircle, Download, QrCode, Play } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTableStore } from '../stores/tableStore';
+import { useOrderStore } from '../stores/orderStore';
 
 const Payment: React.FC = () => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { tableNumber } = useTableStore();
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash'>('online');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber] = useState(`ORD-${Date.now().toString().slice(-6)}`);
+  // Marketing consent fields
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerWhatsapp, setCustomerWhatsapp] = useState('');
+  const [optInMarketing, setOptInMarketing] = useState(true);
 
   const subtotal = getTotalPrice();
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
+  const { addOrder } = useOrderStore();
   const handlePayment = async () => {
     if (items.length === 0) return;
     
@@ -27,8 +34,42 @@ const Payment: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     setIsProcessing(false);
+
+    // Store contact (if opted in)
+    try {
+      if (optInMarketing && (customerEmail || customerWhatsapp)) {
+        const raw = localStorage.getItem('marketingContacts');
+        const list = raw ? JSON.parse(raw) : [];
+        list.unshift({
+          id: Math.random().toString(36).slice(2),
+          name: customerName || 'Guest',
+          email: customerEmail || undefined,
+          whatsapp: customerWhatsapp || undefined,
+          optedIn: true,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('marketingContacts', JSON.stringify(list.slice(0, 500)));
+      }
+    } catch (e) {
+      // ignore localStorage errors
+    }
+
+    // Create order in store (for Chef and Tracker)
+    const orderId = orderNumber;
+    addOrder({
+      id: orderId,
+      customerName,
+      tableNumber,
+      items: items.map(ci => ({ name: ci.item.name, quantity: ci.quantity, notes: ci.notes })),
+      total: items.reduce((t, ci) => t + ci.item.price * ci.quantity, 0),
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      paymentMethod
+    });
+
     setOrderConfirmed(true);
     clearCart();
+    navigate(`/track-order/${orderId}`);
   };
 
   const downloadReceipt = () => {
@@ -208,6 +249,31 @@ Thank you for dining with us!
                   </div>
                 </div>
               </label>
+            </div>
+          </div>
+
+          {/* Marketing Consent */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Get offers and updates
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email (optional)</label>
+                <input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" type="email" className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">WhatsApp (optional)</label>
+                <input value={customerWhatsapp} onChange={(e) => setCustomerWhatsapp(e.target.value)} placeholder="+91 9xxxx xxxxx" className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white" />
+              </div>
+              <div className="flex items-center mt-2">
+                <input id="optin" type="checkbox" checked={optInMarketing} onChange={(e) => setOptInMarketing(e.target.checked)} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <label htmlFor="optin" className="ml-2 text-sm text-gray-700 dark:text-gray-300">I agree to receive personalized offers via Email/WhatsApp</label>
+              </div>
             </div>
           </div>
 

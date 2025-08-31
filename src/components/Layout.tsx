@@ -15,7 +15,7 @@ const Layout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-gray-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -32,6 +32,16 @@ const Layout: React.FC = () => {
                 to="/"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive('/')
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                    : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/menu"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/menu')
                     ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
                     : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
                 }`}
@@ -119,6 +129,17 @@ const Layout: React.FC = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                Home
+              </Link>
+              <Link
+                to="/menu"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive('/menu')
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                    : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 Menu
               </Link>
               <Link
@@ -199,15 +220,52 @@ const Layout: React.FC = () => {
         </div>
       </Link>
 
+      {/* Floating Book Demo FAB */}
+      <a
+        href="#demo"
+        className="fixed bottom-6 left-6 bg-accent-500 hover:bg-accent-600 text-white px-5 py-3 rounded-full shadow-premium hover:shadow-xl transition-all duration-200 z-50"
+        aria-label="Book demo"
+      >
+        Book Demo
+      </a>
+
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600 dark:text-gray-400">
-            <p>&copy; 2024 QR Dine. All rights reserved.</p>
-            <p className="mt-2 text-sm">
-              Scan the QR code at your table to order delicious food!
-            </p>
+      <footer className="bg-secondary-800 text-gray-300 border-t border-gray-700 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg" />
+                <span className="text-xl font-bold text-white">QR Dine</span>
+              </div>
+              <p className="mt-3 text-sm text-gray-400">Premium QR-powered ordering and management platform.</p>
+            </div>
+            <div>
+              <div className="font-semibold text-white mb-3">Product</div>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/menu" className="hover:text-white">Menu</a></li>
+                <li><a href="/owner" className="hover:text-white">Owner Dashboard</a></li>
+                <li><a href="/chef" className="hover:text-white">Chef Dashboard</a></li>
+              </ul>
+            </div>
+            <div>
+              <div className="font-semibold text-white mb-3">Company</div>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#" className="hover:text-white">Pricing</a></li>
+                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><a href="#" className="hover:text-white">Contact</a></li>
+              </ul>
+            </div>
+            <div>
+              <div className="font-semibold text-white mb-3">Newsletter</div>
+              <div className="flex gap-2">
+                <input placeholder="you@example.com" className="px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white flex-1" />
+                <button className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white">Subscribe</button>
+              </div>
+              <div className="text-xs text-gray-500 mt-2">We respect your privacy.</div>
+            </div>
           </div>
+          <div className="mt-10 text-center text-sm text-gray-500">&copy; 2024 QR Dine. All rights reserved.</div>
         </div>
       </footer>
     </div>

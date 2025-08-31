@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { QrCode, BarChart3, ShoppingCart, Users, ArrowRight, Check, Star, Play, Shield, Globe, Palette, Zap, TrendingUp, Heart, X, Utensils, ChefHat, Coffee, Pizza, Wine, Cake, Sandwich } from 'lucide-react';
+import { QrCode, BarChart3, ShoppingCart, Users, ArrowRight, Check, Star, Play, Shield, Globe, Palette, Zap, TrendingUp, Heart, X, Utensils, ChefHat, Coffee, Pizza, Wine, Cake, Sandwich, MessageCircle, Send, Bot } from 'lucide-react';
 
 const Home: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentFeature, setCurrentFeature] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: 1,
+      type: 'bot',
+      message: 'Hello! 👋 I\'m your AI assistant. How can I help you with our Digital QR Menu service today?',
+      timestamp: new Date()
+    }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -60,6 +71,84 @@ const Home: React.FC = () => {
     const menuSection = document.getElementById('menu');
     if (menuSection) {
       menuSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // AI Chat Functions
+  const sendMessage = async () => {
+    if (!chatInput.trim()) return;
+
+    const userMessage = {
+      id: Date.now(),
+      type: 'user',
+      message: chatInput,
+      timestamp: new Date()
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsTyping(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const aiResponse = generateAIResponse(chatInput);
+      const botMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        message: aiResponse,
+        timestamp: new Date()
+      };
+      setChatMessages(prev => [...prev, botMessage]);
+      setIsTyping(false);
+    }, 1000 + Math.random() * 2000); // Random delay for realistic feel
+  };
+
+  const generateAIResponse = (userMessage: string): string => {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('pricing') || message.includes('cost') || message.includes('price')) {
+      return 'Our pricing starts at ₹3,999/year for the Starter Plan, ₹4,999/year for Basic, and ₹5,999/year for Premium. All plans include a 14-day free trial! 💰';
+    }
+    
+    if (message.includes('trial') || message.includes('free')) {
+      return 'Yes! We offer a 14-day free trial with full access to all features. No credit card required. Just fill out our form and you\'ll be set up immediately! 🎉';
+    }
+    
+    if (message.includes('qr') || message.includes('menu')) {
+      return 'Our QR Menu system creates digital menus that customers scan with their phones. It\'s contactless, interactive, and easy to update. Perfect for modern restaurants! 📱';
+    }
+    
+    if (message.includes('features') || message.includes('what can') || message.includes('capabilities')) {
+      return 'Key features include: unlimited menu items, custom themes, multi-language support, allergen info, real-time updates, staff management, and detailed analytics! ✨';
+    }
+    
+    if (message.includes('support') || message.includes('help') || message.includes('contact')) {
+      return 'We provide dedicated support via email at rsdesign0807@gmail.com and phone at +91 9722926434. Our team is here to help you succeed! 🎯';
+    }
+    
+    if (message.includes('setup') || message.includes('how to') || message.includes('get started')) {
+      return 'Getting started is easy! 1) Fill out our form, 2) We\'ll create your custom QR menu, 3) You\'ll receive QR codes to print and display. That\'s it! 🚀';
+    }
+    
+    if (message.includes('restaurant') || message.includes('business')) {
+      return 'Perfect! Our QR Menu system works great for restaurants, cafes, food trucks, bars, and any food service business. We customize it to match your brand! 🍽️';
+    }
+    
+    // Default responses
+    const defaultResponses = [
+      'That\'s a great question! Let me help you with that. Could you provide more details? 🤔',
+      'I\'d be happy to assist you! What specific aspect of our QR Menu service would you like to know more about? 💡',
+      'Thanks for asking! Our team can provide detailed information. Would you like me to connect you with our experts? 📞',
+      'Great question! Our QR Menu system is designed to be user-friendly and powerful. What would you like to explore? 🔍'
+    ];
+    
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
@@ -121,6 +210,96 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
+      {/* AI Chat Bot */}
+      <div className="fixed top-32 right-6 z-50">
+        {/* Chat Button */}
+        {!showChat && (
+          <button
+            onClick={() => setShowChat(true)}
+            className="bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-full shadow-2xl hover:shadow-primary-500/25 transition-all duration-300 hover:scale-110 animate-bounce"
+            title="Chat with AI Assistant"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
+        )}
+
+        {/* Chat Interface */}
+        {showChat && (
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-80 h-96 flex flex-col">
+            {/* Chat Header */}
+            <div className="bg-primary-500 text-white p-4 rounded-t-2xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bot className="w-5 h-5" />
+                <span className="font-semibold">AI Assistant</span>
+              </div>
+              <button
+                onClick={() => setShowChat(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-3">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] p-3 rounded-2xl ${
+                      msg.type === 'user'
+                        ? 'bg-primary-500 text-white rounded-br-md'
+                        : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.message}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 text-gray-800 p-3 rounded-2xl rounded-bl-md">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-4 border-t border-gray-200">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 text-sm"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!chatInput.trim()}
+                  className="bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 text-white p-2 rounded-xl transition-colors duration-200"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}

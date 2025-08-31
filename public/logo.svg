@@ -1,5 +1,3 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="32" cy="32" r="30" stroke="white" stroke-width="2" fill="none"/>
-  <path d="M20 12 L20 44 M16 12 L24 12 M16 16 L24 16 M16 20 L24 20" stroke="white" stroke-width="2" fill="none"/>
-  <path d="M44 12 L44 44 M40 12 L48 12 M40 16 L48 16 M40 20 L48 20 M40 24 L48 24 M40 28 L48 28" stroke="white" stroke-width="2" fill="none"/>
-</svg>
+version https://git-lfs.github.com/spec/v1
+oid sha256:891bf5998903f46bfadc1fec93ad412fdc40a9ab1aec1f476cb79b112b43d3f4
+size 431
